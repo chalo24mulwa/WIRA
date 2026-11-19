@@ -42,14 +42,14 @@ export function GoOnlineToggle() {
       onClick={toggle}
       disabled={busy}
       title={isOnline ? "You're online — tap to go offline" : "Tap to start receiving nearby requests"}
-      className={`flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors disabled:opacity-60 ${
+      className={`flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-full border p-2 text-xs font-semibold transition-colors disabled:opacity-60 sm:px-3 sm:py-1.5 ${
         isOnline
           ? "border-green-500 bg-green-500 text-white hover:bg-green-600"
           : "border-green-500/40 text-green-700 hover:bg-green-50"
       }`}
     >
       <Circle size={8} className={isOnline ? "fill-white" : "fill-green-500"} />
-      {isOnline ? "Online" : "Go Online"}
+      <span className="hidden sm:inline">{isOnline ? "Online" : "Go Online"}</span>
     </button>
   );
 }
