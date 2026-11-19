@@ -9,6 +9,7 @@ const ADMIN_PASSWORD = "WiraAdmin123!";
 
 async function main() {
   const passwordHash = await bcrypt.hash(ADMIN_PASSWORD, 10);
+  const now = new Date();
   const admin = await prisma.user.upsert({
     where: { email: ADMIN_EMAIL },
     update: {},
@@ -18,6 +19,8 @@ async function main() {
       passwordHash,
       role: "ADMIN",
       accountKind: "INDIVIDUAL",
+      emailVerifiedAt: now,
+      phoneVerifiedAt: now,
     },
   });
   await prisma.walletAccount.upsert({

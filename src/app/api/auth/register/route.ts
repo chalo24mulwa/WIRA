@@ -1,8 +1,10 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { hashPassword, setSessionCookie } from "@/lib/auth";
+import { hashPassword } from "@/lib/auth";
 import { registerSchema } from "@/lib/validators";
 import { PLAN_DETAILS } from "@/lib/constants";
+import { normalizePhone } from "@/lib/phone";
+import { issueVerificationCode } from "@/lib/verification";
 
 export async function POST(request: Request) {
   const body = await request.json().catch(() => null);
@@ -16,11 +18,22 @@ export async function POST(request: Request) {
   }
 
   const { name, email, phone, password, role, accountKind, companyName, county } = parsed.data;
+  const phoneNormalized = normalizePhone(phone);
 
-  const existing = await prisma.user.findUnique({ where: { email } });
-  if (existing) {
+  const existingEmail = await prisma.user.findUnique({ where: { email } });
+  if (existingEmail) {
     return NextResponse.json(
       { error: "An account with this email already exists." },
+      { status: 409 }
+    );
+  }
+
+  const existingPhone = phoneNormalized
+    ? await prisma.user.findUnique({ where: { phoneNormalized } })
+    : null;
+  if (existingPhone) {
+    return NextResponse.json(
+      { error: "An account with this phone number already exists." },
       { status: 409 }
     );
   }
@@ -31,7 +44,8 @@ export async function POST(request: Request) {
     data: {
       name,
       email,
-      phone: phone || null,
+      phone,
+      phoneNormalized,
       passwordHash,
       role,
       accountKind,
@@ -64,15 +78,17 @@ export async function POST(request: Request) {
     });
   }
 
-  await setSessionCookie({
-    userId: user.id,
-    role: user.role,
-    accountKind: user.accountKind,
-    name: user.name,
-    email: user.email,
-  });
+  const emailCode = await issueVerificationCode(user.id, "EMAIL_VERIFY", email);
+  const phoneCode = await issueVerificationCode(user.id, "PHONE_VERIFY", phoneNormalized!);
 
+  // No session cookie yet — the account is created but inactive until both
+  // the email and phone verification codes are confirmed via /api/auth/verify.
   return NextResponse.json({
-    user: { id: user.id, name: user.name, email: user.email, role: user.role, accountKind: user.accountKind },
+    requiresVerification: true,
+    userId: user.id,
+    email: user.email,
+    phone: user.phone,
+    devEmailCode: emailCode.devCode,
+    devPhoneCode: phoneCode.devCode,
   });
 }

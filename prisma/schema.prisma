@@ -52,6 +52,7 @@ enum WalletTransactionType {
   FUNDING
   HIRING_FEE
   CONTACT_UNLOCK
+  SUBSCRIPTION
   REFUND
   ADJUSTMENT
 }
@@ -88,16 +89,29 @@ enum PricingMethod {
   PER_JOB
 }
 
+enum VerificationPurpose {
+  EMAIL_VERIFY
+  PHONE_VERIFY
+  EMAIL_CHANGE
+  PHONE_CHANGE
+}
+
 model User {
   id              String    @id @default(cuid())
   name            String
   email           String    @unique
   phone           String?
+  phoneNormalized String?   @unique
   passwordHash    String
   role            Role      @default(CUSTOMER)
   accountKind     AccountKind @default(INDIVIDUAL)
   county          String?
   isSuspended     Boolean   @default(false)
+  emailVerifiedAt DateTime?
+  phoneVerifiedAt DateTime?
+  pendingEmail           String?
+  pendingPhone           String?
+  pendingPhoneNormalized String?
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
 
@@ -113,6 +127,22 @@ model User {
   agencyWorkers        ProfessionalProfile[] @relation("AgencyWorkers")
   conversationsAsEmployer Conversation[] @relation("ConversationEmployer")
   messagesSent         Message[]
+  verificationTokens   VerificationToken[]
+}
+
+model VerificationToken {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id])
+  purpose    VerificationPurpose
+  target     String
+  codeHash   String
+  attempts   Int      @default(0)
+  expiresAt  DateTime
+  consumedAt DateTime?
+  createdAt  DateTime @default(now())
+
+  @@index([userId, purpose])
 }
 
 model CompanyProfile {
@@ -148,6 +178,7 @@ model WalletTransaction {
   reference               String?  @unique
   relatedHiringRequestId  String?
   relatedContactUnlockId  String?
+  relatedSubscriptionId   String?
   status                  WalletTransactionStatus @default(SUCCESS)
   createdAt               DateTime @default(now())
 }
@@ -247,6 +278,16 @@ model PlatformSettings {
   companyHiringFee     Int      @default(150)
   contactUnlockFee     Int      @default(20)
   contactAccessDays    Int      @default(5)
+
+  subscriptionPromoActive Boolean @default(true)
+  subscriptionPromoLabel  String  @default("SPECIAL LAUNCH OFFER")
+  standardPrice           Int     @default(1500)
+  standardPromoPrice      Int     @default(300)
+  professionalPrice       Int     @default(3000)
+  professionalPromoPrice  Int     @default(600)
+  businessPrice           Int     @default(6000)
+  businessPromoPrice      Int     @default(1200)
+
   updatedAt            DateTime @updatedAt
 }
 

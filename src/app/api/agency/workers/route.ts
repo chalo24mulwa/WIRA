@@ -5,6 +5,7 @@ import { requireAgency, handleApiError, ApiError } from "@/lib/require-session";
 import { hashPassword } from "@/lib/auth";
 import { agencyWorkerCreateSchema } from "@/lib/validators";
 import { PLAN_DETAILS } from "@/lib/constants";
+import { normalizePhone } from "@/lib/phone";
 
 export async function GET() {
   try {
@@ -38,21 +39,38 @@ export async function POST(request: Request) {
       throw new ApiError("A WIRA account with this email already exists.");
     }
 
+    const phoneNormalized = phone ? normalizePhone(phone) : null;
+    if (phone && !phoneNormalized) {
+      throw new ApiError("Enter a valid Kenyan phone number for this worker.");
+    }
+    if (phoneNormalized) {
+      const existingPhone = await prisma.user.findUnique({ where: { phoneNormalized } });
+      if (existingPhone) {
+        throw new ApiError("A WIRA account with this phone number already exists.");
+      }
+    }
+
     // Workers added by an agency don't get their own login in this phase —
     // they're a roster entry the agency manages entirely. A real User row
     // still backs them so every existing relation (reviews, bookings,
-    // quotations, subscriptions) works unmodified.
+    // quotations, subscriptions) works unmodified. The agency is vouching
+    // for them, so they're marked verified immediately rather than routed
+    // through the email/SMS OTP flow nobody can complete on their behalf.
     const passwordHash = await hashPassword(randomUUID());
+    const now = new Date();
 
     const worker = await prisma.user.create({
       data: {
         name,
         email,
         phone: phone || null,
+        phoneNormalized,
         passwordHash,
         role: "PROFESSIONAL",
         accountKind: "INDIVIDUAL",
         county,
+        emailVerifiedAt: now,
+        phoneVerifiedAt: now,
       },
     });
 

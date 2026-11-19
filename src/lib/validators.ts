@@ -1,10 +1,17 @@
 import { z } from "zod";
+import { normalizePhone } from "@/lib/phone";
 
 export const registerSchema = z
   .object({
     name: z.string().min(2, "Name is too short").max(100),
     email: z.string().email("Enter a valid email"),
-    phone: z.string().min(7).max(20).optional().or(z.literal("")),
+    phone: z
+      .string()
+      .min(7, "Enter a valid Kenyan phone number")
+      .max(20)
+      .refine((value) => normalizePhone(value) !== null, {
+        message: "Enter a valid Kenyan phone number (07xx xxx xxx or +254…)",
+      }),
     password: z.string().min(6, "Password must be at least 6 characters"),
     role: z.enum(["CUSTOMER", "PROFESSIONAL"]),
     accountKind: z.enum(["INDIVIDUAL", "COMPANY"]),
@@ -19,6 +26,27 @@ export const registerSchema = z
 export const loginSchema = z.object({
   email: z.string().email(),
   password: z.string().min(1),
+});
+
+export const verifyAccountSchema = z.object({
+  userId: z.string().min(1),
+  emailCode: z.string().length(6),
+  phoneCode: z.string().length(6),
+});
+
+export const resendCodeSchema = z.object({
+  userId: z.string().min(1),
+  purpose: z.enum(["EMAIL_VERIFY", "PHONE_VERIFY"]),
+});
+
+export const requestContactChangeSchema = z.object({
+  email: z.string().email().optional(),
+  phone: z.string().optional(),
+});
+
+export const confirmContactChangeSchema = z.object({
+  purpose: z.enum(["EMAIL_CHANGE", "PHONE_CHANGE"]),
+  code: z.string().length(6),
 });
 
 export const serviceRequestSchema = z.object({

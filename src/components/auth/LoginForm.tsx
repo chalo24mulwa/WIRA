@@ -23,6 +23,10 @@ export function LoginForm() {
       });
       const data = await res.json();
       if (!res.ok) {
+        if (data.requiresVerification && data.userId) {
+          router.push(`/verify?userId=${encodeURIComponent(data.userId)}&email=${encodeURIComponent(email)}`);
+          return;
+        }
         setError(data.error ?? "Something went wrong.");
         setLoading(false);
         return;

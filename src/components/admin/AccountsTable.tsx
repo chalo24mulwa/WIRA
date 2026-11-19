@@ -10,6 +10,8 @@ type Account = {
   id: string;
   name: string;
   email: string;
+  phone: string | null;
+  phoneNormalized: string | null;
   role: "CUSTOMER" | "PROFESSIONAL";
   accountKind: "INDIVIDUAL" | "COMPANY";
   isSuspended: boolean;
@@ -107,13 +109,23 @@ export function AccountsTable() {
                       KSh {(u.wallet?.balance ?? 0).toLocaleString()}
                     </td>
                     <td className="px-4 py-3">
-                      <span
-                        className={`rounded-full px-2.5 py-1 text-xs font-semibold ${
-                          u.isSuspended ? "bg-red-100 text-red-700" : "bg-green-100 text-green-700"
-                        }`}
-                      >
-                        {u.isSuspended ? "Suspended" : "Active"}
-                      </span>
+                      <div className="flex flex-wrap gap-1.5">
+                        <span
+                          className={`rounded-full px-2.5 py-1 text-xs font-semibold ${
+                            u.isSuspended ? "bg-red-100 text-red-700" : "bg-green-100 text-green-700"
+                          }`}
+                        >
+                          {u.isSuspended ? "Suspended" : "Active"}
+                        </span>
+                        {u.phone && !u.phoneNormalized && (
+                          <span
+                            title="This phone number duplicates another account from before uniqueness was enforced. Ask the user to update it in Account Settings."
+                            className="rounded-full bg-amber-100 px-2.5 py-1 text-xs font-semibold text-amber-800"
+                          >
+                            Phone conflict
+                          </span>
+                        )}
+                      </div>
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex gap-2">

@@ -11,6 +11,7 @@ import {
   Mail,
   MessageCircle,
   Search,
+  Settings,
   User,
   Users,
   Wallet,
@@ -32,6 +33,7 @@ function customerLinks(accountKind: "INDIVIDUAL" | "COMPANY") {
     ...(accountKind === "COMPANY"
       ? [{ href: "/dashboard/customer/company-profile", label: "Company Profile", icon: Building2 }]
       : []),
+    { href: "/dashboard/customer/settings", label: "Account Settings", icon: Settings },
   ];
 }
 
@@ -50,6 +52,7 @@ function professionalLinks(accountKind: "INDIVIDUAL" | "COMPANY") {
           { href: "/dashboard/professional/company-profile", label: "Agency Profile", icon: Building2 },
         ]
       : []),
+    { href: "/dashboard/professional/settings", label: "Account Settings", icon: Settings },
   ];
 }
 

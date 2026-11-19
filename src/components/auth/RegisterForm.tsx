@@ -79,10 +79,17 @@ export function RegisterForm({ defaultRole }: { defaultRole: Role }) {
         setLoading(false);
         return;
       }
+      try {
+        sessionStorage.setItem(
+          `wira_dev_codes_${data.userId}`,
+          JSON.stringify({ devEmailCode: data.devEmailCode, devPhoneCode: data.devPhoneCode })
+        );
+      } catch {
+        // sessionStorage unavailable — the verify page just won't show a dev-mode hint
+      }
       router.push(
-        role === "PROFESSIONAL" ? "/dashboard/professional/profile" : "/dashboard/customer"
+        `/verify?userId=${encodeURIComponent(data.userId)}&email=${encodeURIComponent(data.email)}&phone=${encodeURIComponent(data.phone ?? "")}`
       );
-      router.refresh();
     } catch {
       setError("Network error. Please try again.");
       setLoading(false);
@@ -197,11 +204,15 @@ export function RegisterForm({ defaultRole }: { defaultRole: Role }) {
         <div>
           <label className="mb-1 block text-sm font-medium text-navy">Phone number</label>
           <input
+            required
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
             className="w-full rounded-xl border border-black/10 px-4 py-2.5 text-sm outline-none focus:border-orange"
             placeholder="07xx xxx xxx"
           />
+          <p className="mt-1 text-xs text-navy/40">
+            We&apos;ll text you a verification code — one phone number per account.
+          </p>
         </div>
         <div>
           <label className="mb-1 block text-sm font-medium text-navy">County</label>

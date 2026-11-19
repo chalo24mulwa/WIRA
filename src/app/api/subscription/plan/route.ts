@@ -3,6 +3,8 @@ import { prisma } from "@/lib/prisma";
 import { requireRole, handleApiError, ApiError } from "@/lib/require-session";
 import { PLAN_DETAILS, BILLING_PERIOD_DAYS } from "@/lib/constants";
 import { getSubscriptionSummary } from "@/lib/credits";
+import { getPlatformSettings, planPricing } from "@/lib/platform-settings";
+import { debitWalletInTx, getOrCreateWallet, InsufficientFundsError } from "@/lib/wallet";
 import type { PlanType } from "@prisma/client";
 
 const VALID_PLANS: PlanType[] = ["FREE", "STANDARD", "PROFESSIONAL", "BUSINESS"];
@@ -26,8 +28,40 @@ export async function POST(request: Request) {
       where: { professionalId: profile.id },
     });
 
-    const creditsTotal =
-      PLAN_DETAILS[plan].credits === -1 ? PLAN_DETAILS[plan].credits : PLAN_DETAILS[plan].credits;
+    if (existing?.plan === plan) {
+      throw new ApiError("You are already on this plan.");
+    }
+
+    const settings = await getPlatformSettings();
+    const { effectivePrice } = planPricing(plan, settings);
+
+    if (effectivePrice > 0) {
+      try {
+        await prisma.$transaction(async (tx) => {
+          await debitWalletInTx(tx, {
+            userId: session.userId,
+            amount: effectivePrice,
+            type: "SUBSCRIPTION",
+          });
+        });
+      } catch (error) {
+        if (error instanceof InsufficientFundsError) {
+          const wallet = await getOrCreateWallet(session.userId);
+          return NextResponse.json(
+            {
+              error: "Insufficient WIRA Coins balance for this plan.",
+              requiresFunding: true,
+              requiredAmount: effectivePrice,
+              walletBalance: wallet.balance,
+            },
+            { status: 402 }
+          );
+        }
+        throw error;
+      }
+    }
+
+    const creditsTotal = PLAN_DETAILS[plan].credits;
 
     if (existing) {
       await prisma.subscription.update({
@@ -35,7 +69,9 @@ export async function POST(request: Request) {
         data: {
           plan,
           creditsTotal,
-          periodEnd: existing.periodEnd ?? new Date(Date.now() + BILLING_PERIOD_DAYS * 86_400_000),
+          creditsUsed: 0,
+          periodStart: new Date(),
+          periodEnd: new Date(Date.now() + BILLING_PERIOD_DAYS * 86_400_000),
         },
       });
     } else {

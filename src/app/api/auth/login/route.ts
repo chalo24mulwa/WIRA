@@ -36,6 +36,17 @@ export async function POST(request: Request) {
     );
   }
 
+  if (!user.emailVerifiedAt || !user.phoneVerifiedAt) {
+    return NextResponse.json(
+      {
+        error: "Please verify your email and phone number to activate your account.",
+        requiresVerification: true,
+        userId: user.id,
+      },
+      { status: 403 }
+    );
+  }
+
   await setSessionCookie({
     userId: user.id,
     role: user.role,
