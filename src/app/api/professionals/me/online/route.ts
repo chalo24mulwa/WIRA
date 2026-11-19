@@ -2,6 +2,20 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireRole, handleApiError, ApiError } from "@/lib/require-session";
 
+export async function GET() {
+  try {
+    const session = await requireRole("PROFESSIONAL");
+    const profile = await prisma.professionalProfile.findUnique({
+      where: { userId: session.userId },
+      select: { isOnline: true },
+    });
+    if (!profile) throw new ApiError("Professional profile not found.", 404);
+    return NextResponse.json({ isOnline: profile.isOnline });
+  } catch (error) {
+    return handleApiError(error);
+  }
+}
+
 export async function POST(request: Request) {
   try {
     const session = await requireRole("PROFESSIONAL");

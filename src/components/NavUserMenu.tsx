@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { ChevronDown, LayoutDashboard, LogOut } from "lucide-react";
 import { NotificationBell } from "@/components/NotificationBell";
+import { GoOnlineToggle } from "@/components/GoOnlineToggle";
 
 export function NavUserMenu({
   name,
@@ -31,6 +32,7 @@ export function NavUserMenu({
 
   return (
     <div className="flex items-center gap-3">
+      {role === "PROFESSIONAL" && <GoOnlineToggle />}
       <NotificationBell />
       <div className="relative">
         <button
