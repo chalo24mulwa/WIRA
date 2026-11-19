@@ -1,6 +1,7 @@
 # WIRA — Professional Services Marketplace
 
 Repository: [github.com/chalo24mulwa/WIRA](https://github.com/chalo24mulwa/WIRA)
+Live demo: coming soon
 
 WIRA connects customers in Kenya with verified professionals for on-demand
 services, and separately runs a company/individual hiring marketplace backed
