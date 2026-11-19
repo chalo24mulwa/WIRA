@@ -1,14 +1,20 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireRole, handleApiError, ApiError } from "@/lib/require-session";
-import { PLAN_DETAILS, BILLING_PERIOD_DAYS } from "@/lib/constants";
 import { getSubscriptionSummary } from "@/lib/credits";
 import { getPlatformSettings, planPricing } from "@/lib/platform-settings";
 import { debitWalletInTx, getOrCreateWallet, InsufficientFundsError } from "@/lib/wallet";
+import { applyPlanChange } from "@/lib/subscription-checkout";
 import type { PlanType } from "@prisma/client";
 
 const VALID_PLANS: PlanType[] = ["FREE", "STANDARD", "PROFESSIONAL", "BUSINESS"];
 
+/**
+ * Pays for a plan straight out of the professional's existing WIRA Coins
+ * balance — the shortcut offered on the M-Pesa checkout page for anyone who
+ * already has enough balance and doesn't need a fresh STK push. The primary,
+ * pay-as-you-go path is /api/subscription/checkout.
+ */
 export async function POST(request: Request) {
   try {
     const session = await requireRole("PROFESSIONAL");
@@ -43,6 +49,7 @@ export async function POST(request: Request) {
             amount: effectivePrice,
             type: "SUBSCRIPTION",
           });
+          await applyPlanChange(tx, profile.id, plan);
         });
       } catch (error) {
         if (error instanceof InsufficientFundsError) {
@@ -59,30 +66,8 @@ export async function POST(request: Request) {
         }
         throw error;
       }
-    }
-
-    const creditsTotal = PLAN_DETAILS[plan].credits;
-
-    if (existing) {
-      await prisma.subscription.update({
-        where: { id: existing.id },
-        data: {
-          plan,
-          creditsTotal,
-          creditsUsed: 0,
-          periodStart: new Date(),
-          periodEnd: new Date(Date.now() + BILLING_PERIOD_DAYS * 86_400_000),
-        },
-      });
     } else {
-      await prisma.subscription.create({
-        data: {
-          professionalId: profile.id,
-          plan,
-          creditsTotal,
-          periodEnd: new Date(Date.now() + BILLING_PERIOD_DAYS * 86_400_000),
-        },
-      });
+      await applyPlanChange(prisma, profile.id, plan);
     }
 
     const summary = await getSubscriptionSummary(profile.id);

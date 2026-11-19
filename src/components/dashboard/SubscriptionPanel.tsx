@@ -1,10 +1,10 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import useSWR from "swr";
 import { Check, Sparkles } from "lucide-react";
 import { PLAN_DETAILS } from "@/lib/constants";
-import { FundingPrompt } from "@/components/dashboard/FundingPrompt";
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
@@ -23,29 +23,30 @@ type PlanPricing = {
 };
 
 export function SubscriptionPanel() {
+  const router = useRouter();
   const { data, mutate, isLoading } = useSWR("/api/subscription", fetcher);
   const [changing, setChanging] = useState<string | null>(null);
   const [error, setError] = useState("");
-  const [fundingFor, setFundingFor] = useState<{
-    plan: string;
-    required: number;
-    available: number;
-  } | null>(null);
 
-  async function changePlan(plan: string) {
+  function choosePlan(plan: string) {
+    if (plan !== "FREE") {
+      // Paid plans are always paid for on the dedicated M-Pesa checkout page.
+      router.push(`/dashboard/professional/subscription/pay/${plan.toLowerCase()}`);
+      return;
+    }
+    switchToFree();
+  }
+
+  async function switchToFree() {
     setError("");
-    setChanging(plan);
+    setChanging("FREE");
     try {
       const res = await fetch("/api/subscription/plan", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ plan }),
+        body: JSON.stringify({ plan: "FREE" }),
       });
       const result = await res.json();
-      if (res.status === 402 && result.requiresFunding) {
-        setFundingFor({ plan, required: result.requiredAmount, available: result.walletBalance });
-        return;
-      }
       if (!res.ok) throw new Error(result.error ?? "Could not switch plans.");
       await mutate();
     } catch (err) {
@@ -81,20 +82,6 @@ export function SubscriptionPanel() {
             </div>
           )}
         </div>
-      )}
-
-      {fundingFor && (
-        <FundingPrompt
-          label={`switch to the ${PLAN_DETAILS[fundingFor.plan as keyof typeof PLAN_DETAILS].label} plan`}
-          requiredAmount={fundingFor.required}
-          availableAmount={fundingFor.available}
-          onCancel={() => setFundingFor(null)}
-          onFunded={async () => {
-            const plan = fundingFor.plan;
-            setFundingFor(null);
-            await changePlan(plan);
-          }}
-        />
       )}
 
       {error && <p className="text-sm text-red-600">{error}</p>}
@@ -145,19 +132,25 @@ export function SubscriptionPanel() {
                 {details.credits === -1 ? "Unlimited" : details.credits} confirmed requests
               </p>
               <button
-                onClick={() => changePlan(key)}
+                onClick={() => choosePlan(key)}
                 disabled={isCurrent || changing === key}
                 className="mt-4 rounded-full wira-gradient-cta px-4 py-2 text-sm font-semibold text-navy shadow-sm hover:opacity-90 disabled:opacity-50"
               >
-                {isCurrent ? "Current plan" : changing === key ? "Switching…" : "Choose plan"}
+                {isCurrent
+                  ? "Current plan"
+                  : changing === key
+                  ? "Switching…"
+                  : key === "FREE"
+                  ? "Choose plan"
+                  : "Pay with M-Pesa"}
               </button>
             </div>
           );
         })}
       </div>
       <p className="text-xs text-navy/40">
-        Paid plans are charged once from your WIRA Coins wallet when you switch, and start a fresh
-        30-day billing period. Only permanently confirmed bookings consume credits.
+        Paid plans are charged once via M-Pesa when you switch, and start a fresh 30-day billing
+        period. Only permanently confirmed bookings consume credits.
       </p>
     </div>
   );
