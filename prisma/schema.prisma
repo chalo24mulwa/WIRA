@@ -1,0 +1,463 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  CUSTOMER
+  PROFESSIONAL
+  ADMIN
+}
+
+enum PlanType {
+  FREE
+  STANDARD
+  PROFESSIONAL
+  BUSINESS
+}
+
+enum RequestStatus {
+  OPEN
+  QUOTED
+  CONFIRMED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum QuotationStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+  WITHDRAWN
+}
+
+enum BookingStatus {
+  CONFIRMED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum AccountKind {
+  INDIVIDUAL
+  COMPANY
+}
+
+enum WalletTransactionType {
+  FUNDING
+  HIRING_FEE
+  CONTACT_UNLOCK
+  REFUND
+  ADJUSTMENT
+}
+
+enum WalletTransactionStatus {
+  PENDING
+  SUCCESS
+  FAILED
+}
+
+enum EmploymentType {
+  CONTRACT
+  PERMANENT
+}
+
+enum HiringRequestStatus {
+  DRAFT
+  PENDING_FUNDING
+  SENT
+  CLOSED
+  CANCELLED
+  EXPIRED
+}
+
+enum HiringRecipientStatus {
+  PENDING
+  VIEWED
+  ACCEPTED
+  DECLINED
+}
+
+enum PricingMethod {
+  PER_HOUR
+  PER_JOB
+}
+
+model User {
+  id              String    @id @default(cuid())
+  name            String
+  email           String    @unique
+  phone           String?
+  passwordHash    String
+  role            Role      @default(CUSTOMER)
+  accountKind     AccountKind @default(INDIVIDUAL)
+  county          String?
+  isSuspended     Boolean   @default(false)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  professional       ProfessionalProfile?
+  serviceRequests     ServiceRequest[]
+  reviewsGiven        Review[]  @relation("ReviewsGiven")
+  notifications       Notification[]
+  companyProfile       CompanyProfile?
+  wallet               WalletAccount?
+  hiringRequestsSent   HiringRequest[]
+  contactUnlocks       ContactUnlock[]
+  savedProfessionals   SavedProfessional[]
+  agencyWorkers        ProfessionalProfile[] @relation("AgencyWorkers")
+  conversationsAsEmployer Conversation[] @relation("ConversationEmployer")
+  messagesSent         Message[]
+}
+
+model CompanyProfile {
+  id                 String   @id @default(cuid())
+  userId             String   @unique
+  user               User     @relation(fields: [userId], references: [id])
+  companyName        String
+  registrationNumber String?
+  industry           String?
+  verified           Boolean  @default(false)
+  createdAt          DateTime @default(now())
+}
+
+model WalletAccount {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id])
+  balance   Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  transactions WalletTransaction[]
+}
+
+model WalletTransaction {
+  id                      String   @id @default(cuid())
+  walletId                String
+  wallet                  WalletAccount @relation(fields: [walletId], references: [id])
+  type                    WalletTransactionType
+  amount                  Int
+  previousBalance         Int
+  newBalance              Int
+  reference               String?  @unique
+  relatedHiringRequestId  String?
+  relatedContactUnlockId  String?
+  status                  WalletTransactionStatus @default(SUCCESS)
+  createdAt               DateTime @default(now())
+}
+
+model HiringRequest {
+  id                      String   @id @default(cuid())
+  employerId              String
+  employer                User     @relation(fields: [employerId], references: [id])
+  employmentType          EmploymentType
+  jobTitle                String
+  jobDescription          String
+  numberRequired          Int      @default(1)
+  workLocationCounty      String
+  workLocationTown        String?
+  salaryOrPayment         String
+  workingHours            String?
+  startDate               DateTime?
+  contractDurationDays    Int?
+  requiredQualifications  String?
+  additionalInstructions  String?
+  status                  HiringRequestStatus @default(SENT)
+  feeAmount               Int
+  chargeProcessed         Boolean  @default(false)
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
+
+  recipients    HiringRequestRecipient[]
+  conversations Conversation[]
+}
+
+model Conversation {
+  id              String   @id @default(cuid())
+  recipientId     String   @unique
+  recipient       HiringRequestRecipient @relation(fields: [recipientId], references: [id])
+  hiringRequestId String
+  hiringRequest   HiringRequest @relation(fields: [hiringRequestId], references: [id])
+  professionalId  String
+  professional    ProfessionalProfile @relation(fields: [professionalId], references: [id])
+  employerId      String
+  employer        User     @relation("ConversationEmployer", fields: [employerId], references: [id])
+  createdAt       DateTime @default(now())
+
+  messages Message[]
+}
+
+model Message {
+  id             String   @id @default(cuid())
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id])
+  senderId       String
+  sender         User     @relation(fields: [senderId], references: [id])
+  body           String
+  readAt         DateTime?
+  createdAt      DateTime @default(now())
+}
+
+model HiringRequestRecipient {
+  id              String   @id @default(cuid())
+  hiringRequestId String
+  hiringRequest   HiringRequest @relation(fields: [hiringRequestId], references: [id])
+  professionalId  String
+  professional    ProfessionalProfile @relation(fields: [professionalId], references: [id])
+  status          HiringRecipientStatus @default(PENDING)
+  respondedAt     DateTime?
+  createdAt       DateTime @default(now())
+
+  conversation Conversation?
+
+  @@unique([hiringRequestId, professionalId])
+}
+
+model ContactUnlock {
+  id             String   @id @default(cuid())
+  employerId     String
+  employer       User     @relation(fields: [employerId], references: [id])
+  professionalId String
+  professional   ProfessionalProfile @relation(fields: [professionalId], references: [id])
+  source         String
+  expiresAt      DateTime
+  createdAt      DateTime @default(now())
+}
+
+model SavedProfessional {
+  id             String   @id @default(cuid())
+  customerId     String
+  customer       User     @relation(fields: [customerId], references: [id])
+  professionalId String
+  professional   ProfessionalProfile @relation(fields: [professionalId], references: [id])
+  createdAt      DateTime @default(now())
+
+  @@unique([customerId, professionalId])
+}
+
+model PlatformSettings {
+  id                   String   @id @default("singleton")
+  individualHiringFee  Int      @default(100)
+  companyHiringFee     Int      @default(150)
+  contactUnlockFee     Int      @default(20)
+  contactAccessDays    Int      @default(5)
+  updatedAt            DateTime @updatedAt
+}
+
+model ServiceCategory {
+  id              String    @id @default(cuid())
+  name            String    @unique
+  slug            String    @unique
+  icon            String?
+
+  specializations Specialization[]
+  professionals   ProfessionalCategory[]
+  serviceRequests ServiceRequest[]
+}
+
+model Specialization {
+  id            String   @id @default(cuid())
+  name          String
+  categoryId    String
+  category      ServiceCategory @relation(fields: [categoryId], references: [id])
+  professionals ProfessionalSpecialization[]
+
+  @@unique([name, categoryId])
+}
+
+model ProfessionalProfile {
+  id              String   @id @default(cuid())
+  userId          String   @unique
+  user            User     @relation(fields: [userId], references: [id])
+  bio             String?
+  county          String
+  town            String?
+  latitude        Float?
+  longitude       Float?
+  serviceRadiusKm Float    @default(15)
+  isOnline        Boolean  @default(false)
+  ratingAvg       Float    @default(0)
+  ratingCount     Int      @default(0)
+  verified        Boolean  @default(false)
+  agencyOwnerId   String?
+  agencyOwner     User?    @relation("AgencyWorkers", fields: [agencyOwnerId], references: [id])
+  createdAt       DateTime @default(now())
+
+  categories      ProfessionalCategory[]
+  specializations ProfessionalSpecialization[]
+  credentials     Credential[]
+  portfolioPhotos PortfolioPhoto[]
+  quotations      Quotation[]
+  bookings        Booking[]
+  reviewsReceived Review[] @relation("ReviewsReceived")
+  subscription    Subscription?
+  dismissals      RequestDismissal[]
+  hiringInvitations HiringRequestRecipient[]
+  contactUnlocks    ContactUnlock[]
+  savedBy           SavedProfessional[]
+  conversations     Conversation[]
+}
+
+model ProfessionalCategory {
+  id             String   @id @default(cuid())
+  professionalId String
+  categoryId     String
+  professional   ProfessionalProfile @relation(fields: [professionalId], references: [id])
+  category       ServiceCategory     @relation(fields: [categoryId], references: [id])
+
+  @@unique([professionalId, categoryId])
+}
+
+model ProfessionalSpecialization {
+  id               String   @id @default(cuid())
+  professionalId   String
+  specializationId String
+  professional     ProfessionalProfile @relation(fields: [professionalId], references: [id])
+  specialization   Specialization      @relation(fields: [specializationId], references: [id])
+
+  @@unique([professionalId, specializationId])
+}
+
+model Credential {
+  id             String   @id @default(cuid())
+  professionalId String
+  professional   ProfessionalProfile @relation(fields: [professionalId], references: [id])
+  title          String
+  fileUrl        String
+  createdAt      DateTime @default(now())
+}
+
+model PortfolioPhoto {
+  id             String   @id @default(cuid())
+  professionalId String
+  professional   ProfessionalProfile @relation(fields: [professionalId], references: [id])
+  url            String
+  caption        String?
+  createdAt      DateTime @default(now())
+}
+
+model ServiceRequest {
+  id          String   @id @default(cuid())
+  customerId  String
+  customer    User     @relation(fields: [customerId], references: [id])
+  categoryId  String
+  category    ServiceCategory @relation(fields: [categoryId], references: [id])
+  description String
+  photoUrls   String   @default("[]")
+  county      String
+  town        String?
+  latitude    Float?
+  longitude   Float?
+  budgetAmount Float?
+  budgetMethod PricingMethod?
+  status      RequestStatus @default(OPEN)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  quotations  Quotation[]
+  booking     Booking?
+  dismissals  RequestDismissal[]
+}
+
+model RequestDismissal {
+  id             String   @id @default(cuid())
+  requestId      String
+  professionalId String
+  request        ServiceRequest @relation(fields: [requestId], references: [id])
+  professional   ProfessionalProfile @relation(fields: [professionalId], references: [id])
+  createdAt      DateTime @default(now())
+
+  @@unique([requestId, professionalId])
+}
+
+model Quotation {
+  id             String   @id @default(cuid())
+  requestId      String
+  request        ServiceRequest @relation(fields: [requestId], references: [id])
+  professionalId String
+  professional   ProfessionalProfile @relation(fields: [professionalId], references: [id])
+  amount         Float
+  pricingMethod  PricingMethod @default(PER_JOB)
+  estimatedCompletion String?
+  message        String?
+  status         QuotationStatus @default(PENDING)
+  acceptedAt     DateTime?
+  popupSeenAt    DateTime?
+  createdAt      DateTime @default(now())
+
+  booking        Booking?
+
+  @@unique([requestId, professionalId])
+}
+
+model Booking {
+  id             String   @id @default(cuid())
+  requestId      String   @unique
+  request        ServiceRequest @relation(fields: [requestId], references: [id])
+  quotationId    String   @unique
+  quotation      Quotation @relation(fields: [quotationId], references: [id])
+  professionalId String
+  professional   ProfessionalProfile @relation(fields: [professionalId], references: [id])
+  status         BookingStatus @default(CONFIRMED)
+  creditConsumed Boolean  @default(false)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  review         Review?
+}
+
+model Review {
+  id             String   @id @default(cuid())
+  bookingId      String   @unique
+  booking        Booking  @relation(fields: [bookingId], references: [id])
+  professionalId String
+  professional   ProfessionalProfile @relation("ReviewsReceived", fields: [professionalId], references: [id])
+  customerId     String
+  customer       User     @relation("ReviewsGiven", fields: [customerId], references: [id])
+  rating         Int
+  comment        String?
+  createdAt      DateTime @default(now())
+}
+
+model Subscription {
+  id             String   @id @default(cuid())
+  professionalId String   @unique
+  professional   ProfessionalProfile @relation(fields: [professionalId], references: [id])
+  plan           PlanType @default(FREE)
+  creditsTotal   Int      @default(5)
+  creditsUsed    Int      @default(0)
+  periodStart    DateTime @default(now())
+  periodEnd      DateTime?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  transactions   CreditTransaction[]
+}
+
+model CreditTransaction {
+  id             String   @id @default(cuid())
+  subscriptionId String
+  subscription   Subscription @relation(fields: [subscriptionId], references: [id])
+  bookingId      String?
+  amount         Int
+  reason         String
+  createdAt      DateTime @default(now())
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  type      String
+  title     String
+  body      String
+  read      Boolean  @default(false)
+  link      String?
+  createdAt DateTime @default(now())
+}

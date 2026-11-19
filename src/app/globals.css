@@ -1,0 +1,56 @@
+@import "tailwindcss";
+
+:root {
+  --background: #ffffff;
+  --foreground: #0b1527;
+
+  /* WIRA brand palette */
+  --wira-navy: #0b1f3a;
+  --wira-navy-dark: #061329;
+  --wira-navy-light: #15335c;
+  --wira-orange: #f4791e;
+  --wira-gold: #ffc23c;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-navy: var(--wira-navy);
+  --color-navy-dark: var(--wira-navy-dark);
+  --color-navy-light: var(--wira-navy-light);
+  --color-orange: var(--wira-orange);
+  --color-gold: var(--wira-gold);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+}
+
+.wira-gradient {
+  background-image: linear-gradient(135deg, var(--wira-navy) 0%, var(--wira-navy-light) 55%, var(--wira-orange) 100%);
+}
+
+.wira-gradient-cta {
+  background-image: linear-gradient(90deg, var(--wira-orange) 0%, var(--wira-gold) 100%);
+}
+
+.wira-text-gradient {
+  background-image: linear-gradient(90deg, var(--wira-orange) 0%, var(--wira-gold) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+.leaflet-container {
+  width: 100%;
+  height: 100%;
+  border-radius: 0.75rem;
+}
