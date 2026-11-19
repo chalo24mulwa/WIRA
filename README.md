@@ -1,36 +1,48 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# WIRA — Professional Services Marketplace
 
-## Getting Started
+Repository: [github.com/chalo24mulwa/WIRA](https://github.com/chalo24mulwa/WIRA)
 
-First, run the development server:
+WIRA connects customers in Kenya with verified professionals for on-demand
+services, and separately runs a company/individual hiring marketplace backed
+by a WIRA Coins prepaid wallet.
+
+## Features
+
+- Customer service requests with GPS/county discovery, optional budgets, and
+  quotation review (per-hour or per-job pricing, estimated completion time)
+- Real-time quotation alerts (popup + sound) and a ringtone-style incoming
+  job alert for professionals, with accept/decline
+- Subscription credit plans for professionals (FREE / STANDARD / PROFESSIONAL
+  / BUSINESS), consumed only on confirmed bookings
+- Backend-enforced contact privacy: phone/email are hidden until a booking or
+  hiring acceptance, then revealed only to the two parties involved
+- A separate Hire marketplace for individual/company employers, with a WIRA
+  Coins wallet, one-time hiring fees, timed contact unlocks, and agency
+  worker management
+- In-app messaging, notifications, reviews, and an admin panel (accounts,
+  hiring oversight, wallets, DB-configurable pricing)
+
+## Tech stack
+
+Next.js (App Router, TypeScript), Tailwind CSS, Prisma + SQLite, custom JWT
+session auth.
+
+## Getting started
 
 ```bash
+npm install
+npx prisma migrate dev
+npx prisma db seed
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000). Copy `.env.example` (or
+create `.env`) with `DATABASE_URL` and `JWT_SECRET` before running.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Project structure
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- `src/app` — routes (marketing pages, `dashboard/customer`,
+  `dashboard/professional`, `admin`, and the `api/*` route handlers)
+- `src/components` — UI components, grouped by `dashboard/`, `admin/`, `auth/`
+- `src/lib` — session/auth, credits, wallet, notifications, validators
+- `prisma/schema.prisma` — data model and migrations
