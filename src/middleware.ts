@@ -24,14 +24,21 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  const isProfessionalArea = pathname.startsWith("/dashboard/professional");
-  const isCustomerArea = pathname.startsWith("/dashboard/customer");
+  const areaRole: Record<string, string> = {
+    "/dashboard/professional": "PROFESSIONAL",
+    "/dashboard/customer": "CUSTOMER",
+    "/dashboard/affiliate": "AFFILIATE",
+  };
+  const roleHome: Record<string, string> = {
+    PROFESSIONAL: "/dashboard/professional",
+    CUSTOMER: "/dashboard/customer",
+    AFFILIATE: "/dashboard/affiliate",
+  };
 
-  if (isProfessionalArea && session.role !== "PROFESSIONAL") {
-    return NextResponse.redirect(new URL("/dashboard/customer", request.url));
-  }
-  if (isCustomerArea && session.role !== "CUSTOMER") {
-    return NextResponse.redirect(new URL("/dashboard/professional", request.url));
+  for (const [prefix, requiredRole] of Object.entries(areaRole)) {
+    if (pathname.startsWith(prefix) && session.role !== requiredRole) {
+      return NextResponse.redirect(new URL(roleHome[session.role] ?? "/dashboard/customer", request.url));
+    }
   }
 
   return NextResponse.next();

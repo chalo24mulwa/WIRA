@@ -1,13 +1,15 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
-import { LayoutDashboard, Settings, ShieldCheck, Users, Wallet } from "lucide-react";
+import { LayoutDashboard, Megaphone, Settings, ShieldCheck, Users, Wallet } from "lucide-react";
 
 const ADMIN_LINKS = [
   { href: "/admin", label: "Overview", icon: LayoutDashboard },
   { href: "/admin/accounts", label: "Accounts", icon: Users },
   { href: "/admin/hiring", label: "Hiring Requests", icon: ShieldCheck },
   { href: "/admin/wallets", label: "Wallets", icon: Wallet },
+  { href: "/admin/affiliates", label: "Affiliates", icon: Megaphone },
+  { href: "/admin/campaigns", label: "Campaigns", icon: Megaphone },
   { href: "/admin/settings", label: "Pricing Settings", icon: Settings },
 ];
 

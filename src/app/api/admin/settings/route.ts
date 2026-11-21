@@ -29,6 +29,8 @@ export async function PUT(request: Request) {
       "professionalPromoPrice",
       "businessPrice",
       "businessPromoPrice",
+      "affiliateDefaultCommission",
+      "affiliateMinPayoutThreshold",
     ] as const;
 
     const data: Record<string, number | boolean | string> = {};

@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { setSessionCookie } from "@/lib/auth";
 import { verifyAccountSchema } from "@/lib/validators";
 import { consumeVerificationCode, VerificationError } from "@/lib/verification";
+import { markReferralEligible } from "@/lib/affiliate";
 
 export async function POST(request: Request) {
   const body = await request.json().catch(() => null);
@@ -39,6 +40,8 @@ export async function POST(request: Request) {
     where: { id: userId },
     data: { emailVerifiedAt: user.emailVerifiedAt ?? new Date(), phoneVerifiedAt: user.phoneVerifiedAt ?? new Date() },
   });
+
+  await markReferralEligible(updated.id);
 
   await setSessionCookie({
     userId: updated.id,

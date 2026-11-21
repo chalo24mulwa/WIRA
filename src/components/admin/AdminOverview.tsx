@@ -1,7 +1,7 @@
 "use client";
 
 import useSWR from "swr";
-import { Briefcase, Building2, ShieldCheck, User, Users, Wallet } from "lucide-react";
+import { Briefcase, Building2, Megaphone, ShieldCheck, User, Users, Wallet } from "lucide-react";
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
@@ -53,6 +53,41 @@ export function AdminOverview() {
           <Building2 className="text-orange" size={22} />
           <p className="mt-3 text-2xl font-bold text-navy">{data.pendingVerifications}</p>
           <p className="text-sm text-navy/60">Companies awaiting verification</p>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <div className="rounded-2xl border border-black/5 bg-white p-5 shadow-sm">
+          <Megaphone className="text-orange" size={22} />
+          <p className="mt-3 text-2xl font-bold text-navy">{data.affiliates.totalReferrals}</p>
+          <p className="text-sm text-navy/60">Total affiliate referrals</p>
+          <p className="mt-1 text-xs text-navy/40">
+            {data.affiliates.totalApproved} active affiliates · {data.affiliates.pendingApplications} applications
+            awaiting review
+          </p>
+        </div>
+        <div className="rounded-2xl border border-black/5 bg-white p-5 shadow-sm">
+          <Wallet className="text-orange" size={22} />
+          <p className="mt-3 text-2xl font-bold text-navy">
+            KSh {data.affiliates.commissionLiability.toLocaleString()}
+          </p>
+          <p className="text-sm text-navy/60">Outstanding commission liability</p>
+          <p className="mt-1 text-xs text-navy/40">Pending + approved, not yet paid out</p>
+        </div>
+        <div className="rounded-2xl border border-black/5 bg-white p-5 shadow-sm">
+          <p className="text-sm font-semibold text-navy">Top affiliates</p>
+          {data.affiliates.topAffiliates.length === 0 ? (
+            <p className="mt-2 text-xs text-navy/40">No referrals yet.</p>
+          ) : (
+            <ul className="mt-2 space-y-1 text-sm text-navy/70">
+              {data.affiliates.topAffiliates.map((a: { name: string; referrals: number }) => (
+                <li key={a.name} className="flex justify-between">
+                  <span>{a.name}</span>
+                  <span className="font-semibold text-navy">{a.referrals}</span>
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
       </div>
     </div>

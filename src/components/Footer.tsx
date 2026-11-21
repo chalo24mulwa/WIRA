@@ -40,6 +40,7 @@ export function Footer() {
             <li><Link href="/register?role=PROFESSIONAL" className="hover:text-gold transition-colors">Join as a Professional</Link></li>
             <li><Link href="/#how-it-works" className="hover:text-gold transition-colors">How It Works</Link></li>
             <li><Link href="/dashboard/professional/subscription" className="hover:text-gold transition-colors">Subscription Plans</Link></li>
+            <li><Link href="/affiliate" className="hover:text-gold transition-colors">Affiliate Program</Link></li>
           </ul>
         </div>
 

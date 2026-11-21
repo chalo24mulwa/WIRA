@@ -70,6 +70,8 @@ export function VerifyAccountForm({ userId, email, phone }: { userId: string; em
           ? "/admin"
           : data.user.role === "PROFESSIONAL"
           ? "/dashboard/professional"
+          : data.user.role === "AFFILIATE"
+          ? "/dashboard/affiliate"
           : "/dashboard/customer";
       router.push(dest);
       router.refresh();

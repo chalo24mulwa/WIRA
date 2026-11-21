@@ -13,7 +13,7 @@ function getSecretKey() {
 
 export type SessionPayload = {
   userId: string;
-  role: "CUSTOMER" | "PROFESSIONAL" | "ADMIN";
+  role: "CUSTOMER" | "PROFESSIONAL" | "ADMIN" | "AFFILIATE";
   accountKind: "INDIVIDUAL" | "COMPANY";
   name: string;
   email: string;

@@ -12,7 +12,7 @@ export function NavUserMenu({
   role,
 }: {
   name: string;
-  role: "CUSTOMER" | "PROFESSIONAL" | "ADMIN";
+  role: "CUSTOMER" | "PROFESSIONAL" | "ADMIN" | "AFFILIATE";
 }) {
   const [open, setOpen] = useState(false);
   const router = useRouter();
@@ -22,6 +22,8 @@ export function NavUserMenu({
       ? "/admin"
       : role === "PROFESSIONAL"
       ? "/dashboard/professional"
+      : role === "AFFILIATE"
+      ? "/dashboard/affiliate"
       : "/dashboard/customer";
 
   async function handleLogout() {

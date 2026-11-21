@@ -105,6 +105,45 @@ export const agencyWorkerCreateSchema = z.object({
   categoryIds: z.array(z.string()).min(1, "Select at least one category"),
 });
 
+export const affiliateApplySchema = z.object({
+  name: z.string().min(2, "Name is too short").max(100),
+  businessName: z.string().max(150).optional().or(z.literal("")),
+  accountKind: z.enum(["INDIVIDUAL", "COMPANY"]),
+  email: z.string().email("Enter a valid email"),
+  phone: z
+    .string()
+    .min(7, "Enter a valid Kenyan phone number")
+    .refine((value) => normalizePhone(value) !== null, {
+      message: "Enter a valid Kenyan phone number (07xx xxx xxx or +254…)",
+    }),
+  payoutPhone: z
+    .string()
+    .min(7, "Enter a valid Kenyan M-Pesa number")
+    .refine((value) => normalizePhone(value) !== null, {
+      message: "Enter a valid Kenyan M-Pesa number (07xx xxx xxx or +254…)",
+    }),
+  county: z.string().min(2, "Select your county"),
+  password: z.string().min(6, "Password must be at least 6 characters"),
+});
+
+export const affiliatePayoutSchema = z.object({
+  method: z.enum(["MPESA", "MANUAL"]),
+  commissionIds: z.array(z.string()).min(1, "Select at least one commission to pay out"),
+  note: z.string().max(500).optional().or(z.literal("")),
+  clientReference: z.string().min(1),
+});
+
+export const campaignSchema = z.object({
+  name: z.string().min(2, "Enter a campaign name").max(100),
+  slug: z
+    .string()
+    .min(2)
+    .max(60)
+    .regex(/^[a-z0-9-]+$/, "Use lowercase letters, numbers and hyphens only"),
+  description: z.string().max(500).optional().or(z.literal("")),
+  commissionOverride: z.number().int().min(0).optional(),
+});
+
 export const reviewSchema = z.object({
   rating: z.number().int().min(1).max(5),
   comment: z.string().max(1000).optional().or(z.literal("")),

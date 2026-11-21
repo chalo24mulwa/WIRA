@@ -7,8 +7,10 @@ import {
   Building2,
   ClipboardList,
   LayoutDashboard,
+  Link2,
   ListChecks,
   Mail,
+  Megaphone,
   MessageCircle,
   Search,
   Settings,
@@ -56,9 +58,20 @@ function professionalLinks(accountKind: "INDIVIDUAL" | "COMPANY") {
   ];
 }
 
+function affiliateLinks() {
+  return [
+    { href: "/dashboard/affiliate", label: "Overview", icon: LayoutDashboard },
+    { href: "/dashboard/affiliate/referrals", label: "My Referrals", icon: Link2 },
+    { href: "/dashboard/affiliate/payouts", label: "Payouts", icon: Wallet },
+    { href: "/dashboard/affiliate/resources", label: "Marketing Resources", icon: Megaphone },
+    { href: "/dashboard/affiliate/settings", label: "Account Settings", icon: Settings },
+  ];
+}
+
 const ROLE_LABEL: Record<string, Record<string, string>> = {
   CUSTOMER: { INDIVIDUAL: "Individual Customer", COMPANY: "Company Customer" },
   PROFESSIONAL: { INDIVIDUAL: "Individual Professional", COMPANY: "Company / Agency" },
+  AFFILIATE: { INDIVIDUAL: "Individual Affiliate", COMPANY: "Agency Affiliate" },
 };
 
 export default async function DashboardLayout({ children }: LayoutProps<"/dashboard">) {
@@ -68,9 +81,18 @@ export default async function DashboardLayout({ children }: LayoutProps<"/dashbo
   const links =
     session.role === "PROFESSIONAL"
       ? professionalLinks(session.accountKind)
+      : session.role === "AFFILIATE"
+      ? affiliateLinks()
       : customerLinks(session.accountKind);
 
-  const HeaderIcon = session.accountKind === "COMPANY" ? Users : session.role === "PROFESSIONAL" ? Briefcase : User;
+  const HeaderIcon =
+    session.role === "AFFILIATE"
+      ? Megaphone
+      : session.accountKind === "COMPANY"
+      ? Users
+      : session.role === "PROFESSIONAL"
+      ? Briefcase
+      : User;
 
   return (
     <div className="mx-auto flex max-w-7xl flex-col gap-6 px-4 py-8 sm:px-6 lg:flex-row lg:px-8">

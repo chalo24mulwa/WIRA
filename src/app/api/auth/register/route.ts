@@ -5,6 +5,7 @@ import { registerSchema } from "@/lib/validators";
 import { PLAN_DETAILS } from "@/lib/constants";
 import { normalizePhone } from "@/lib/phone";
 import { issueVerificationCode } from "@/lib/verification";
+import { attributeReferralIfPresent } from "@/lib/affiliate";
 
 export async function POST(request: Request) {
   const body = await request.json().catch(() => null);
@@ -54,6 +55,12 @@ export async function POST(request: Request) {
   });
 
   await prisma.walletAccount.create({ data: { userId: user.id, balance: 0 } });
+
+  await attributeReferralIfPresent({
+    newUserId: user.id,
+    newUserEmail: user.email,
+    newUserPhoneNormalized: user.phoneNormalized,
+  });
 
   if (accountKind === "COMPANY") {
     await prisma.companyProfile.create({

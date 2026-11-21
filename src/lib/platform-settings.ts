@@ -15,6 +15,8 @@ const DEFAULTS = {
   professionalPromoPrice: 600,
   businessPrice: 6000,
   businessPromoPrice: 1200,
+  affiliateDefaultCommission: 500,
+  affiliateMinPayoutThreshold: 1000,
 };
 
 /**

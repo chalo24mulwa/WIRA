@@ -33,6 +33,10 @@ export async function requireAgency(): Promise<SessionPayload> {
   return session;
 }
 
+export async function requireAffiliate(): Promise<SessionPayload> {
+  return requireRole("AFFILIATE");
+}
+
 export function handleApiError(error: unknown) {
   if (error instanceof ApiError) {
     return NextResponse.json({ error: error.message }, { status: error.status });
