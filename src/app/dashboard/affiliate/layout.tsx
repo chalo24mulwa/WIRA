@@ -2,13 +2,25 @@ import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { Clock, ShieldAlert, XCircle } from "lucide-react";
+import { InlineAffiliateApply } from "@/components/affiliate/InlineAffiliateApply";
 
 export default async function AffiliateDashboardLayout({ children }: LayoutProps<"/dashboard/affiliate">) {
   const session = await getSession();
   if (!session) redirect("/login");
+  if (session.role === "ADMIN") redirect("/admin");
 
   const affiliate = await prisma.affiliate.findUnique({ where: { userId: session.userId } });
-  if (!affiliate) redirect("/login");
+
+  if (!affiliate) {
+    // A Customer or Professional landing here for the first time: offer to
+    // attach an affiliate profile to this same account instead of sending
+    // them through a whole separate signup. An AFFILIATE-role account
+    // always has its Affiliate row created at application time, so it
+    // should never reach this branch — but if it somehow did, the form
+    // below still degrades gracefully into the same apply flow.
+    const user = await prisma.user.findUnique({ where: { id: session.userId }, select: { phone: true } });
+    return <InlineAffiliateApply accountPhone={user?.phone ?? null} />;
+  }
 
   if (affiliate.status === "APPROVED") {
     return <>{children}</>;

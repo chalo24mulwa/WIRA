@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
 import {
   Bookmark,
   Briefcase,
@@ -21,7 +22,25 @@ import {
 import { IncomingRequestAlert } from "@/components/dashboard/IncomingRequestAlert";
 import { QuotationPopupAlert } from "@/components/dashboard/QuotationPopupAlert";
 
-function customerLinks(accountKind: "INDIVIDUAL" | "COMPANY") {
+type AttachedAffiliateStatus = "PENDING" | "APPROVED" | "REJECTED" | "SUSPENDED" | null;
+
+/** Affiliate nav entries for a Customer/Professional account that has (or could apply for) an affiliate profile attached to it. */
+function affiliateAddonLinks(status: AttachedAffiliateStatus) {
+  if (status === "APPROVED") {
+    return [
+      { href: "/dashboard/affiliate", label: "Affiliate Overview", icon: Megaphone },
+      { href: "/dashboard/affiliate/referrals", label: "My Referrals", icon: Link2 },
+      { href: "/dashboard/affiliate/payouts", label: "Affiliate Payouts", icon: Wallet },
+      { href: "/dashboard/affiliate/resources", label: "Marketing Resources", icon: Megaphone },
+    ];
+  }
+  if (status) {
+    return [{ href: "/dashboard/affiliate", label: "Affiliate Program", icon: Megaphone }];
+  }
+  return [{ href: "/dashboard/affiliate", label: "Become an Affiliate", icon: Megaphone }];
+}
+
+function customerLinks(accountKind: "INDIVIDUAL" | "COMPANY", affiliateStatus: AttachedAffiliateStatus) {
   return [
     { href: "/dashboard/customer", label: "Overview", icon: LayoutDashboard },
     { href: "/search", label: "Find Professionals", icon: Search },
@@ -35,11 +54,12 @@ function customerLinks(accountKind: "INDIVIDUAL" | "COMPANY") {
     ...(accountKind === "COMPANY"
       ? [{ href: "/dashboard/customer/company-profile", label: "Company Profile", icon: Building2 }]
       : []),
+    ...affiliateAddonLinks(affiliateStatus),
     { href: "/dashboard/customer/settings", label: "Account Settings", icon: Settings },
   ];
 }
 
-function professionalLinks(accountKind: "INDIVIDUAL" | "COMPANY") {
+function professionalLinks(accountKind: "INDIVIDUAL" | "COMPANY", affiliateStatus: AttachedAffiliateStatus) {
   return [
     { href: "/dashboard/professional", label: "Overview", icon: LayoutDashboard },
     { href: "/dashboard/professional/requests", label: "Nearby Requests", icon: ClipboardList },
@@ -54,6 +74,7 @@ function professionalLinks(accountKind: "INDIVIDUAL" | "COMPANY") {
           { href: "/dashboard/professional/company-profile", label: "Agency Profile", icon: Building2 },
         ]
       : []),
+    ...affiliateAddonLinks(affiliateStatus),
     { href: "/dashboard/professional/settings", label: "Account Settings", icon: Settings },
   ];
 }
@@ -78,12 +99,17 @@ export default async function DashboardLayout({ children }: LayoutProps<"/dashbo
   const session = await getSession();
   if (!session) redirect("/login");
 
+  const attachedAffiliate =
+    session.role === "CUSTOMER" || session.role === "PROFESSIONAL"
+      ? await prisma.affiliate.findUnique({ where: { userId: session.userId }, select: { status: true } })
+      : null;
+
   const links =
     session.role === "PROFESSIONAL"
-      ? professionalLinks(session.accountKind)
+      ? professionalLinks(session.accountKind, attachedAffiliate?.status ?? null)
       : session.role === "AFFILIATE"
       ? affiliateLinks()
-      : customerLinks(session.accountKind);
+      : customerLinks(session.accountKind, attachedAffiliate?.status ?? null);
 
   const HeaderIcon =
     session.role === "AFFILIATE"

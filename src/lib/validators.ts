@@ -126,6 +126,15 @@ export const affiliateApplySchema = z.object({
   password: z.string().min(6, "Password must be at least 6 characters"),
 });
 
+export const affiliateApplyExistingSchema = z.object({
+  payoutPhone: z
+    .string()
+    .min(7, "Enter a valid Kenyan M-Pesa number")
+    .refine((value) => normalizePhone(value) !== null, {
+      message: "Enter a valid Kenyan M-Pesa number (07xx xxx xxx or +254…)",
+    }),
+});
+
 export const affiliatePayoutSchema = z.object({
   method: z.enum(["MPESA", "MANUAL"]),
   commissionIds: z.array(z.string()).min(1, "Select at least one commission to pay out"),

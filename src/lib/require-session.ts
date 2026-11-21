@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getSession, type SessionPayload } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
 
 export class ApiError extends Error {
   status: number;
@@ -33,8 +34,18 @@ export async function requireAgency(): Promise<SessionPayload> {
   return session;
 }
 
+/**
+ * An affiliate profile can belong to a dedicated AFFILIATE account or be
+ * attached to an existing Customer/Professional login — so this checks for
+ * the Affiliate row itself rather than any particular Role.
+ */
 export async function requireAffiliate(): Promise<SessionPayload> {
-  return requireRole("AFFILIATE");
+  const session = await requireUser();
+  const affiliate = await prisma.affiliate.findUnique({ where: { userId: session.userId } });
+  if (!affiliate) {
+    throw new ApiError("You don't have an affiliate profile yet.", 403);
+  }
+  return session;
 }
 
 export function handleApiError(error: unknown) {

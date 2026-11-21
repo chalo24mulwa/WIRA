@@ -24,10 +24,13 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
+  // /dashboard/affiliate is deliberately not restricted here: Customer and
+  // Professional accounts can attach an affiliate profile to their existing
+  // login, so that route's own layout decides what to show per account
+  // instead of middleware redirecting non-AFFILIATE roles away from it.
   const areaRole: Record<string, string> = {
     "/dashboard/professional": "PROFESSIONAL",
     "/dashboard/customer": "CUSTOMER",
-    "/dashboard/affiliate": "AFFILIATE",
   };
   const roleHome: Record<string, string> = {
     PROFESSIONAL: "/dashboard/professional",
