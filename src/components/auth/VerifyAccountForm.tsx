@@ -17,11 +17,26 @@ function readStashedDevCodes(userId: string): { devEmailCode: string | null; dev
   }
 }
 
-export function VerifyAccountForm({ userId, email, phone }: { userId: string; email?: string; phone?: string }) {
+export function VerifyAccountForm({
+  userId,
+  email,
+  phone,
+  needsEmailCode = true,
+  initialDevPhoneCode,
+}: {
+  userId: string;
+  email?: string;
+  phone?: string;
+  needsEmailCode?: boolean;
+  initialDevPhoneCode?: string;
+}) {
   const router = useRouter();
   const [emailCode, setEmailCode] = useState("");
   const [phoneCode, setPhoneCode] = useState("");
-  const [stashedCodes, setStashedCodes] = useState(() => readStashedDevCodes(userId));
+  const [stashedCodes, setStashedCodes] = useState(() => {
+    const stashed = readStashedDevCodes(userId);
+    return { ...stashed, devPhoneCode: stashed.devPhoneCode ?? initialDevPhoneCode ?? null };
+  });
   const devEmailCode = stashedCodes.devEmailCode;
   const devPhoneCode = stashedCodes.devPhoneCode;
   const setDevEmailCode = (value: string | null) => setStashedCodes((prev) => ({ ...prev, devEmailCode: value }));
@@ -61,7 +76,11 @@ export function VerifyAccountForm({ userId, email, phone }: { userId: string; em
       const res = await fetch("/api/auth/verify", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId, emailCode, phoneCode }),
+        body: JSON.stringify({
+          userId,
+          emailCode: needsEmailCode ? emailCode : undefined,
+          phoneCode,
+        }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Could not verify your account.");
@@ -85,39 +104,42 @@ export function VerifyAccountForm({ userId, email, phone }: { userId: string; em
     <div className="mx-auto w-full max-w-md">
       <h1 className="text-2xl font-bold text-navy">Verify your account</h1>
       <p className="mt-1 text-sm text-navy/60">
-        Enter the 6-digit codes we sent to your email{email ? ` (${email})` : ""} and phone
-        {phone ? ` (${phone})` : ""} to activate your account.
+        {needsEmailCode
+          ? `Enter the 6-digit codes we sent to your email${email ? ` (${email})` : ""} and phone${phone ? ` (${phone})` : ""} to activate your account.`
+          : `Your email is already verified. Enter the 6-digit code we texted to your phone${phone ? ` (${phone})` : ""} to activate your account.`}
       </p>
 
       <form onSubmit={handleSubmit} className="mt-6 space-y-4">
-        <div>
-          <label className="mb-1 flex items-center gap-1.5 text-sm font-medium text-navy">
-            <MailCheck size={15} /> Email code
-          </label>
-          <input
-            required
-            inputMode="numeric"
-            maxLength={6}
-            value={emailCode}
-            onChange={(e) => setEmailCode(e.target.value.replace(/\D/g, ""))}
-            className="w-full rounded-xl border border-black/10 px-4 py-2.5 text-center text-lg tracking-[0.3em] outline-none focus:border-orange"
-            placeholder="123456"
-          />
-          {devEmailCode && (
-            <p className="mt-1 text-xs text-amber-700">
-              Development mode (no email provider configured) — your code is{" "}
-              <strong>{devEmailCode}</strong>.
-            </p>
-          )}
-          <button
-            type="button"
-            onClick={() => handleResend("EMAIL_VERIFY")}
-            disabled={resending === "EMAIL_VERIFY"}
-            className="mt-1 text-xs font-semibold text-orange hover:underline disabled:opacity-60"
-          >
-            {resending === "EMAIL_VERIFY" ? "Sending…" : "Resend email code"}
-          </button>
-        </div>
+        {needsEmailCode && (
+          <div>
+            <label className="mb-1 flex items-center gap-1.5 text-sm font-medium text-navy">
+              <MailCheck size={15} /> Email code
+            </label>
+            <input
+              required
+              inputMode="numeric"
+              maxLength={6}
+              value={emailCode}
+              onChange={(e) => setEmailCode(e.target.value.replace(/\D/g, ""))}
+              className="w-full rounded-xl border border-black/10 px-4 py-2.5 text-center text-lg tracking-[0.3em] outline-none focus:border-orange"
+              placeholder="123456"
+            />
+            {devEmailCode && (
+              <p className="mt-1 text-xs text-amber-700">
+                Development mode (no email provider configured) — your code is{" "}
+                <strong>{devEmailCode}</strong>.
+              </p>
+            )}
+            <button
+              type="button"
+              onClick={() => handleResend("EMAIL_VERIFY")}
+              disabled={resending === "EMAIL_VERIFY"}
+              className="mt-1 text-xs font-semibold text-orange hover:underline disabled:opacity-60"
+            >
+              {resending === "EMAIL_VERIFY" ? "Sending…" : "Resend email code"}
+            </button>
+          </div>
+        )}
 
         <div>
           <label className="mb-1 flex items-center gap-1.5 text-sm font-medium text-navy">

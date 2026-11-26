@@ -16,9 +16,17 @@ export default async function VerifyPage({ searchParams }: PageProps<"/verify">)
   const userId = first(params.userId);
   if (!userId) redirect("/register");
 
+  const needsEmailCode = first(params.needsEmailCode) !== "0";
+
   return (
     <div className="mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-8">
-      <VerifyAccountForm userId={userId} email={first(params.email)} phone={first(params.phone)} />
+      <VerifyAccountForm
+        userId={userId}
+        email={first(params.email)}
+        phone={first(params.phone)}
+        needsEmailCode={needsEmailCode}
+        initialDevPhoneCode={first(params.devPhoneCode)}
+      />
     </div>
   );
 }

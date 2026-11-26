@@ -24,9 +24,11 @@ export async function POST(request: Request) {
 
   try {
     if (!user.emailVerifiedAt) {
+      if (!emailCode) throw new VerificationError("Enter the email code.");
       await consumeVerificationCode(userId, "EMAIL_VERIFY", emailCode);
     }
     if (!user.phoneVerifiedAt) {
+      if (!phoneCode) throw new VerificationError("Enter the phone code.");
       await consumeVerificationCode(userId, "PHONE_VERIFY", phoneCode);
     }
   } catch (error) {

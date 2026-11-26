@@ -30,13 +30,37 @@ export const loginSchema = z.object({
 
 export const verifyAccountSchema = z.object({
   userId: z.string().min(1),
-  emailCode: z.string().length(6),
-  phoneCode: z.string().length(6),
+  // Both optional: a Google sign-up whose email Google already verified only
+  // ever needs to submit a phoneCode, so the route checks each one against
+  // whether that side of the account is already verified rather than
+  // requiring both unconditionally.
+  emailCode: z.string().length(6).optional(),
+  phoneCode: z.string().length(6).optional(),
 });
 
 export const resendCodeSchema = z.object({
   userId: z.string().min(1),
   purpose: z.enum(["EMAIL_VERIFY", "PHONE_VERIFY"]),
+});
+
+export const forgotPasswordSchema = z.object({
+  email: z.string().email(),
+});
+
+export const resetPasswordSchema = z.object({
+  email: z.string().email(),
+  code: z.string().length(6),
+  password: z.string().min(6, "Password must be at least 6 characters"),
+});
+
+export const googleSetPhoneSchema = z.object({
+  userId: z.string().min(1),
+  phone: z
+    .string()
+    .min(7, "Enter a valid Kenyan phone number")
+    .refine((value) => normalizePhone(value) !== null, {
+      message: "Enter a valid Kenyan phone number (07xx xxx xxx or +254…)",
+    }),
 });
 
 export const requestContactChangeSchema = z.object({

@@ -5,6 +5,8 @@ import Link from "next/link";
 import { useState } from "react";
 import { Briefcase, Building2, User, Users } from "lucide-react";
 import { KENYAN_COUNTIES } from "@/lib/constants";
+import { PasswordInput } from "@/components/PasswordInput";
+import { GoogleButton } from "@/components/auth/GoogleButton";
 
 type Role = "CUSTOMER" | "PROFESSIONAL";
 type AccountKind = "INDIVIDUAL" | "COMPANY";
@@ -161,7 +163,20 @@ export function RegisterForm({ defaultRole }: { defaultRole: Role }) {
         </div>
       </div>
 
-      <form onSubmit={handleSubmit} className="mt-6 space-y-4">
+      {accountKind === "INDIVIDUAL" && (
+        <>
+          <div className="mt-6">
+            <GoogleButton mode="register" role={role} />
+          </div>
+          <div className="my-5 flex items-center gap-3 text-xs font-medium uppercase tracking-wide text-navy/30">
+            <span className="h-px flex-1 bg-black/10" />
+            or
+            <span className="h-px flex-1 bg-black/10" />
+          </div>
+        </>
+      )}
+
+      <form onSubmit={handleSubmit} className={accountKind === "INDIVIDUAL" ? "space-y-4" : "mt-6 space-y-4"}>
         <div>
           <label className="mb-1 block text-sm font-medium text-navy">
             {accountKind === "COMPANY" ? "Contact person's name" : "Full name"}
@@ -232,14 +247,13 @@ export function RegisterForm({ defaultRole }: { defaultRole: Role }) {
         </div>
         <div>
           <label className="mb-1 block text-sm font-medium text-navy">Password</label>
-          <input
+          <PasswordInput
             required
-            type="password"
             minLength={6}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="w-full rounded-xl border border-black/10 px-4 py-2.5 text-sm outline-none focus:border-orange"
             placeholder="At least 6 characters"
+            autoComplete="new-password"
           />
         </div>
 

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { Building2, User } from "lucide-react";
 import { KENYAN_COUNTIES } from "@/lib/constants";
+import { PasswordInput } from "@/components/PasswordInput";
 
 type AccountKind = "INDIVIDUAL" | "COMPANY";
 
@@ -195,14 +196,13 @@ export function AffiliateApplyForm() {
 
         <div>
           <label className="mb-1 block text-sm font-medium text-navy">Password</label>
-          <input
+          <PasswordInput
             required
-            type="password"
             minLength={6}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="w-full rounded-xl border border-black/10 px-4 py-2.5 text-sm outline-none focus:border-orange"
             placeholder="At least 6 characters"
+            autoComplete="new-password"
           />
         </div>
 
