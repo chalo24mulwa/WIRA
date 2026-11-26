@@ -4,8 +4,9 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build --webpack",
+    "build": "prisma generate && next build --webpack",
     "start": "next start",
+    "postinstall": "prisma generate",
     "lint": "eslint",
     "db:seed": "tsx prisma/seed.ts"
   },
@@ -14,8 +15,14 @@
   },
   "dependencies": {
     "@prisma/client": "6.19.3",
+    "@tailwindcss/postcss": "^4.3.3",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
     "bcryptjs": "^3.0.3",
     "clsx": "^2.1.1",
+    "eslint": "^9",
+    "eslint-config-next": "16.4.6",
     "jose": "^6.2.17",
     "leaflet": "^1.9.4",
     "lucide-react": "^1.75.0",
@@ -25,18 +32,12 @@
     "react-dom": "19.3.0",
     "react-leaflet": "^5.0.0",
     "swr": "^2.5.1",
+    "tailwindcss": "4.3.3",
+    "typescript": "^5",
     "zod": "^4.6.7"
   },
   "devDependencies": {
-    "@tailwindcss/postcss": "^4.3.3",
-    "@types/node": "^20",
-    "@types/react": "^19",
-    "@types/react-dom": "^19",
-    "eslint": "^9",
-    "eslint-config-next": "16.4.6",
-    "tailwindcss": "4.3.3",
-    "tsx": "^4.23.15",
-    "typescript": "^5"
+    "tsx": "^4.23.15"
   },
   "allowScripts": {
     "@prisma/client@6.19.3": true,
